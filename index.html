@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real Estate Lead Organizer V0.2 Calendar Reminders</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --ink: #172033;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #111827;
+      --primary-soft: #eef2ff;
+      --hot: #fee2e2;
+      --warm: #fef3c7;
+      --cold: #e0f2fe;
+      --won: #dcfce7;
+      --lost: #f3f4f6;
+      --danger: #b91c1c;
+      --radius: 18px;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .app { max-width: 1400px; margin: 0 auto; padding: 22px; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -0.04em; }
+    .subtitle { margin-top: 4px; color: var(--muted); font-size: 14px; }
+    .top-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    button, .btn {
+      border: 0;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 13px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    button.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    button.ghost { background: transparent; color: var(--ink); border: 1px solid transparent; }
+    button.danger { background: var(--danger); }
+    button.small { padding: 7px 9px; border-radius: 10px; font-size: 12px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      gap: 12px;
+    }
+    .panel-title { font-weight: 900; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(110px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+    .stat small { display: block; color: var(--muted); font-size: 12px; }
+    .stat strong { display: block; font-size: 24px; margin-top: 4px; letter-spacing: -0.05em; }
+    .controls {
+      display: grid;
+      grid-template-columns: 1.4fr repeat(3, 1fr);
+      gap: 8px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfbfd;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 11px;
+      background: #fff;
+      font: inherit;
+      outline: none;
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; font-size: 13px; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; background: #fff; position: sticky; top: 0; z-index: 1; }
+    tr:hover td { background: #fafafa; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #f3f4f6;
+      margin: 2px 2px 2px 0;
+      white-space: nowrap;
+    }
+    .status-HOT { background: var(--hot); color: #991b1b; }
+    .status-WARM { background: var(--warm); color: #92400e; }
+    .status-COLD { background: var(--cold); color: #075985; }
+    .status-WON { background: var(--won); color: #166534; }
+    .status-LOST { background: var(--lost); color: #374151; }
+    .lead-name { font-weight: 900; }
+    .muted { color: var(--muted); }
+    .right-stack { display: grid; gap: 16px; }
+    .calendar-nav { display: flex; align-items: center; gap: 6px; }
+    .calendar { padding: 12px; }
+    .weekday, .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .weekday div { text-align: center; color: var(--muted); font-weight: 800; font-size: 11px; padding: 8px 0; }
+    .day {
+      min-height: 72px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 7px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .day.today { border-color: #111827; }
+    .day.out { opacity: 0.35; }
+    .day-num { font-weight: 900; font-size: 12px; }
+    .dot { display: block; height: 5px; border-radius: 20px; background: #111827; margin-top: 4px; }
+    .event-mini { font-size: 10px; margin-top: 4px; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .reminder-mini { font-size: 10px; margin-top: 2px; color: #92400e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .reminder-due { border-color: #f59e0b; background: #fffbeb; }
+    .reminder-ok { border-color: var(--line); }
+    .day-detail { padding: 0 14px 14px; }
+    .day-detail h3 { margin: 4px 0 10px; font-size: 15px; }
+    .detail-item { border: 1px solid var(--line); border-radius: 12px; padding: 10px; margin-bottom: 8px; background: #fafafa; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    dialog {
+      border: 0;
+      border-radius: 22px;
+      padding: 0;
+      width: min(780px, calc(100vw - 28px));
+      box-shadow: 0 25px 80px rgba(0,0,0,0.24);
+    }
+    dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+    .modal-body { padding: 16px; }
+    .label-editor { display: flex; gap: 8px; margin-top: 10px; }
+    .label-list { display: grid; gap: 8px; padding: 14px; }
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: #fafafa;
+    }
+    .label-row-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .label-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .hidden { display: none !important; }
+    .table-wrap { max-height: 610px; overflow: auto; }
+    .empty { padding: 22px; color: var(--muted); text-align: center; }
+    .import-file { display: none; }
+    @media (max-width: 1050px) {
+      .grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .controls { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 700px) {
+      .app { padding: 14px; }
+      header { align-items: flex-start; flex-direction: column; }
+      .top-actions { justify-content: flex-start; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5) { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Real Estate Lead Organizer</h1>
+        <div class="subtitle">V0.2 local web app · Editable labels · Calendar appointment reminders · Follow-up control</div>
+      </div>
+      <div class="top-actions">
+        <button id="addLeadBtn">+ Add Lead</button>
+        <button class="secondary" id="labelsBtn">Labels</button>
+        <button class="secondary" id="exportBtn">Export</button>
+        <button class="secondary" id="importBtn">Import</button>
+        <input type="file" id="importFile" class="import-file" accept="application/json" />
+      </div>
+    </header>
+
+    <section class="stats" id="stats"></section>
+
+    <main class="grid">
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Lead Command Center</div>
+          <button class="secondary small" id="clearFiltersBtn">Clear filters</button>
+        </div>
+        <div class="controls">
+          <input id="searchInput" placeholder="Search name, phone, location, property, notes..." />
+          <select id="statusFilter"></select>
+          <select id="labelFilter"></select>
+          <select id="sortFilter">
+            <option value="nextAction">Sort: Next action</option>
+            <option value="createdDesc">Sort: Newest</option>
+            <option value="appointmentAsc">Sort: Appointment</option>
+            <option value="budgetDesc">Sort: Budget high</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Status</th>
+                <th>Need</th>
+                <th>Appointment</th>
+                <th>Next Action</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="leadRows"></tbody>
+          </table>
+          <div id="emptyState" class="empty hidden">No leads found. Add your first lead to start.</div>
+        </div>
+      </section>
+
+      <aside class="right-stack">
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title" id="monthTitle">Calendar</div>
+            <div class="calendar-nav">
+              <button class="secondary small" id="prevMonth">‹</button>
+              <button class="secondary small" id="todayBtn">Today</button>
+              <button class="secondary small" id="nextMonth">›</button>
+            </div>
+          </div>
+          <div class="calendar">
+            <div class="weekday"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+            <div class="days" id="calendarDays"></div>
+          </div>
+          <div class="day-detail" id="dayDetail"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Follow-up Queue</div>
+          </div>
+          <div id="followUpList" style="padding:14px;"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Reminder Notifications</div>
+            <button class="secondary small" id="enableNotificationsBtn">Enable</button>
+          </div>
+          <div id="reminderList" style="padding:14px;"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="leadDialog">
+    <div class="panel-head">
+      <div class="panel-title" id="dialogTitle">Add Lead</div>
+      <button class="ghost small" onclick="document.getElementById('leadDialog').close()">✕</button>
+    </div>
+    <form id="leadForm" class="modal-body">
+      <input type="hidden" id="leadId" />
+      <div class="form-grid">
+        <label>Name<input id="name" required placeholder="Juan Dela Cruz" /></label>
+        <label>Phone<input id="phone" placeholder="09xx xxx xxxx" /></label>
+        <label>Intent<select id="intent"><option>Buy</option><option>Rent</option><option>Sell</option><option>Lease</option><option>Inquiry</option></select></label>
+        <label>Status<select id="status"><option>HOT</option><option>WARM</option><option>COLD</option><option>WON</option><option>LOST</option></select></label>
+        <label>Location<input id="location" placeholder="Pasay, BGC, Makati..." /></label>
+        <label>Property Type<input id="propertyType" placeholder="Condo, lot, house, commercial..." /></label>
+        <label>Budget<input id="budget" type="number" min="0" placeholder="3000000" /></label>
+        <label>Timeline<input id="timeline" placeholder="ASAP, this month, 3 months..." /></label>
+        <label>Appointment Date<input id="appointmentDate" type="date" /></label>
+        <label>Appointment Time<input id="appointmentTime" type="time" /></label>
+        <label>Reminder Before<select id="reminderBefore"><option value="">No reminder</option><option value="15">15 minutes before</option><option value="30">30 minutes before</option><option value="60">1 hour before</option><option value="120">2 hours before</option><option value="1440">1 day before</option><option value="custom">Custom notification time</option></select></label>
+        <label id="customReminderWrap" class="hidden">Notification Time<input id="reminderAt" type="datetime-local" /></label>
+        <label>Next Follow-up<input id="nextFollowUp" type="date" /></label>
+        <label>Source<input id="source" placeholder="FB, referral, website, call..." /></label>
+        <label class="full">Labels<select id="labels" multiple size="5"></select></label>
+        <label class="full">Notes<textarea id="notes" placeholder="Summary, objections, property details, buyer readiness..."></textarea></label>
+        <label class="full">Next Action<input id="nextAction" placeholder="Send sample properties, confirm viewing, ask budget proof..." /></label>
+      </div>
+      <div style="display:flex; justify-content:space-between; gap:10px; margin-top:14px;">
+        <button type="button" class="danger hidden" id="deleteLeadBtn">Delete</button>
+        <div style="display:flex; gap:8px; margin-left:auto;">
+          <button type="button" class="secondary" onclick="document.getElementById('leadDialog').close()">Cancel</button>
+          <button type="submit">Save Lead</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="labelsDialog">
+    <div class="panel-head">
+      <div class="panel-title">Customize Labels</div>
+      <button class="ghost small" onclick="document.getElementById('labelsDialog').close()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="muted">Use labels for custom pipelines like Investor, Buyer, Seller, Need Site Visit, Cash Buyer, Financing, Follow-up Today. You can add, rename, or delete labels anytime. Renaming a label also updates all existing leads using that label.</div>
+      <div class="label-editor">
+        <input id="newLabelInput" placeholder="New label name" />
+        <button id="addLabelBtn">Add Label</button>
+      </div>
+    </div>
+    <div class="label-list" id="labelList"></div>
+  </dialog>
+
+  <script>
+    const STORAGE_KEY = 'realEstateLeadOrganizerV0';
+    const NOTIFIED_KEY = STORAGE_KEY + '_remindersNotified';
+    const defaultData = {
+      labels: ['Cash Buyer', 'Financing', 'Investor', 'Need Viewing', 'Seller Lead', 'Rental', 'Urgent', 'Negotiation'],
+      leads: [
+        {
+          id: crypto.randomUUID(), createdAt: new Date().toISOString(), name: 'Sample Hot Buyer', phone: '0917 000 0000', intent: 'Buy', status: 'HOT',
+          location: 'Pasay / MOA area', propertyType: 'Condo', budget: 3500000, timeline: 'This month', source: 'Facebook',
+          appointmentDate: new Date().toISOString().slice(0,10), appointmentTime: '14:00', reminderBefore: '60', reminderAt: '', nextFollowUp: new Date().toISOString().slice(0,10),
+          labels: ['Cash Buyer', 'Need Viewing'], notes: 'Looking for ready-for-occupancy unit near airport/MOA.', nextAction: 'Confirm viewing and send 3 matching units.'
+        }
+      ]
+    };
+    let state = loadState();
+    let calendarDate = new Date();
+    let selectedDate = new Date().toISOString().slice(0,10);
+
+    const qs = id => document.getElementById(id);
+    function loadState() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData; }
+      catch { return defaultData; }
+    }
+    function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function money(n) { return n ? '₱' + Number(n).toLocaleString() : '—'; }
+    function fmtDate(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'; }
+    function todayStr() { return new Date().toISOString().slice(0,10); }
+    function getAppointmentDateTime(lead) {
+      if (!lead.appointmentDate || !lead.appointmentTime) return null;
+      const d = new Date(`${lead.appointmentDate}T${lead.appointmentTime}:00`);
+      return isNaN(d) ? null : d;
+    }
+    function computeReminderDate(lead) {
+      const appt = getAppointmentDateTime(lead);
+      if (!appt) return null;
+      if (lead.reminderBefore === 'custom') {
+        if (!lead.reminderAt) return null;
+        const custom = new Date(lead.reminderAt);
+        return isNaN(custom) ? null : custom;
+      }
+      const minutes = Number(lead.reminderBefore || 0);
+      if (!minutes) return null;
+      return new Date(appt.getTime() - minutes * 60000);
+    }
+    function fmtDateTime(value) {
+      if (!value) return '—';
+      const d = value instanceof Date ? value : new Date(value);
+      if (isNaN(d)) return '—';
+      return d.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+    function toDateTimeLocalValue(d) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    function reminderText(lead) {
+      const reminderDate = computeReminderDate(lead);
+      if (!reminderDate) return 'No reminder';
+      return `Notify: ${fmtDateTime(reminderDate)}`;
+    }
+    function getNotifiedMap() {
+      try { return JSON.parse(localStorage.getItem(NOTIFIED_KEY)) || {}; }
+      catch { return {}; }
+    }
+    function saveNotifiedMap(map) { localStorage.setItem(NOTIFIED_KEY, JSON.stringify(map)); }
+    function reminderKey(lead) {
+      const d = computeReminderDate(lead);
+      return d ? `${lead.id}_${d.toISOString()}` : lead.id;
+    }
+
+    function renderAll() {
+      renderFilters(); renderStats(); renderLeads(); renderCalendar(); renderFollowUps(); renderReminders(); renderLabels();
+    }
+
+    function renderFilters() {
+      const statuses = ['All Status', 'HOT', 'WARM', 'COLD', 'WON', 'LOST'];
+      qs('statusFilter').innerHTML = statuses.map(s => `<option value="${s === 'All Status' ? '' : s}">${s}</option>`).join('');
+      qs('labelFilter').innerHTML = ['<option value="">All Labels</option>', ...state.labels.map(l => `<option>${escapeHtml(l)}</option>`)].join('');
+      qs('labels').innerHTML = state.labels.map(l => `<option>${escapeHtml(l)}</option>`).join('');
+    }
+
+    function renderStats() {
+      const leads = state.leads;
+      const due = leads.filter(l => l.nextFollowUp && l.nextFollowUp <= todayStr() && !['WON','LOST'].includes(l.status)).length;
+      const todayAppts = leads.filter(l => l.appointmentDate === todayStr()).length;
+      const now = new Date();
+      const dueReminders = leads.filter(l => {
+        const reminder = computeReminderDate(l);
+        const appt = getAppointmentDateTime(l);
+        return reminder && reminder <= now && (!appt || appt >= now) && !['WON','LOST'].includes(l.status);
+      }).length;
+      const data = [
+        ['Total Leads', leads.length], ['HOT', leads.filter(l => l.status === 'HOT').length], ['Today Appts', todayAppts], ['Due Follow-up', due], ['Due Reminders', dueReminders]
+      ];
+      qs('stats').innerHTML = data.map(([label, value]) => `<div class="stat"><small>${label}</small><strong>${value}</strong></div>`).join('');
+    }
+
+    function filteredLeads() {
+      const q = qs('searchInput').value.toLowerCase().trim();
+      const status = qs('statusFilter').value;
+      const label = qs('labelFilter').value;
+      const sort = qs('sortFilter').value;
+      let leads = state.leads.filter(l => {
+        const text = [l.name,l.phone,l.intent,l.location,l.propertyType,l.source,l.notes,l.nextAction].join(' ').toLowerCase();
+        return (!q || text.includes(q)) && (!status || l.status === status) && (!label || (l.labels || []).includes(label));
+      });
+      leads.sort((a,b) => {
+        if (sort === 'createdDesc') return new Date(b.createdAt) - new Date(a.createdAt);
+        if (sort === 'appointmentAsc') return (a.appointmentDate || '9999') > (b.appointmentDate || '9999') ? 1 : -1;
+        if (sort === 'budgetDesc') return Number(b.budget || 0) - Number(a.budget || 0);
+        return (a.nextFollowUp || '9999') > (b.nextFollowUp || '9999') ? 1 : -1;
+      });
+      return leads;
+    }
+
+    function renderLeads() {
+      const rows = filteredLeads();
+      qs('emptyState').classList.toggle('hidden', rows.length !== 0);
+      qs('leadRows').innerHTML = rows.map(l => `
+        <tr>
+          <td><div class="lead-name">${escapeHtml(l.name)}</div><div class="muted">${escapeHtml(l.phone || '')} · ${escapeHtml(l.source || '')}</div>${(l.labels||[]).map(label => `<span class="badge">${escapeHtml(label)}</span>`).join('')}</td>
+          <td><span class="badge status-${l.status}">${l.status}</span></td>
+          <td>${escapeHtml(l.intent || '—')}<br><span class="muted">${escapeHtml(l.location || '—')} · ${money(l.budget)}</span></td>
+          <td>${l.appointmentDate ? fmtDate(l.appointmentDate) : '—'}<br><span class="muted">${l.appointmentTime || ''}</span><br><span class="muted">${escapeHtml(reminderText(l))}</span></td>
+          <td>${escapeHtml(l.nextAction || '—')}<br><span class="muted">Follow-up: ${fmtDate(l.nextFollowUp)}</span></td>
+          <td><button class="secondary small" onclick="editLead('${l.id}')">Edit</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderCalendar() {
+      const y = calendarDate.getFullYear();
+      const m = calendarDate.getMonth();
+      qs('monthTitle').textContent = calendarDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      const first = new Date(y, m, 1);
+      const start = new Date(y, m, 1 - first.getDay());
+      const days = [];
+      for (let i=0; i<42; i++) {
+        const d = new Date(start); d.setDate(start.getDate()+i);
+        const ds = d.toISOString().slice(0,10);
+        const events = state.leads.filter(l => l.appointmentDate === ds);
+        days.push(`<div class="day ${d.getMonth() !== m ? 'out' : ''} ${ds === todayStr() ? 'today' : ''}" onclick="selectDay('${ds}')">
+          <div class="day-num">${d.getDate()}</div>
+          ${events.slice(0,2).map(e => `<div class="event-mini">${escapeHtml(e.appointmentTime || '')} ${escapeHtml(e.name)}</div>${computeReminderDate(e) ? `<div class="reminder-mini">🔔 ${fmtDateTime(computeReminderDate(e)).replace(/^[^,]+,? /, '')}</div>` : ''}`).join('')}
+          ${events.length > 2 ? `<span class="dot"></span>` : ''}
+        </div>`);
+      }
+      qs('calendarDays').innerHTML = days.join('');
+      renderDayDetail();
+    }
+
+    function selectDay(ds) { selectedDate = ds; renderDayDetail(); }
+    function renderDayDetail() {
+      const events = state.leads.filter(l => l.appointmentDate === selectedDate).sort((a,b) => (a.appointmentTime || '').localeCompare(b.appointmentTime || ''));
+      qs('dayDetail').innerHTML = `<h3>${fmtDate(selectedDate)}</h3>` + (events.length ? events.map(e => {
+        const reminder = computeReminderDate(e);
+        const dueClass = reminder && reminder <= new Date() ? ' reminder-due' : '';
+        return `<div class="detail-item${dueClass}"><strong>${escapeHtml(e.appointmentTime || 'No time')} · ${escapeHtml(e.name)}</strong><br><span class="muted">${escapeHtml(e.intent)} · ${escapeHtml(e.location || '')}</span><br><span class="muted">🔔 ${escapeHtml(reminderText(e))}</span><br><button class="secondary small" style="margin-top:8px" onclick="editLead('${e.id}')">Open lead</button></div>`;
+      }).join('') : '<div class="muted">No appointments on this day.</div>');
+    }
+
+    function renderFollowUps() {
+      const due = state.leads.filter(l => l.nextFollowUp && !['WON','LOST'].includes(l.status)).sort((a,b) => a.nextFollowUp.localeCompare(b.nextFollowUp)).slice(0,8);
+      qs('followUpList').innerHTML = due.length ? due.map(l => `<div class="detail-item"><strong>${escapeHtml(l.name)}</strong> <span class="badge status-${l.status}">${l.status}</span><br><span class="muted">${fmtDate(l.nextFollowUp)} · ${escapeHtml(l.nextAction || 'Follow up')}</span><br><button class="secondary small" style="margin-top:8px" onclick="editLead('${l.id}')">Update</button></div>`).join('') : '<div class="muted">No follow-ups scheduled.</div>';
+    }
+
+    function renderReminders() {
+      const now = new Date();
+      const reminders = state.leads
+        .map(l => ({ lead: l, reminder: computeReminderDate(l), appt: getAppointmentDateTime(l) }))
+        .filter(x => x.reminder && !['WON','LOST'].includes(x.lead.status))
+        .sort((a,b) => a.reminder - b.reminder)
+        .slice(0,8);
+      qs('reminderList').innerHTML = reminders.length ? reminders.map(x => {
+        const isDue = x.reminder <= now && (!x.appt || x.appt >= now);
+        return `<div class="detail-item${isDue ? ' reminder-due' : ''}"><strong>${escapeHtml(x.lead.name)}</strong> <span class="badge status-${x.lead.status}">${x.lead.status}</span><br><span class="muted">🔔 ${fmtDateTime(x.reminder)}</span><br><span class="muted">Appointment: ${fmtDate(x.lead.appointmentDate)} ${escapeHtml(x.lead.appointmentTime || '')}</span><br><button class="secondary small" style="margin-top:8px" onclick="editLead('${x.lead.id}')">Update</button></div>`;
+      }).join('') : '<div class="muted">No appointment reminders scheduled.</div>';
+    }
+
+    function renderLabels() {
+      qs('labelList').innerHTML = state.labels.length ? state.labels.map(label => `
+        <div class="label-row">
+          <div class="label-row-left"><span class="badge">${escapeHtml(label)}</span><span class="muted">${countLeadsWithLabel(label)} lead(s)</span></div>
+          <div class="label-row-actions">
+            <button class="secondary small" data-action="rename-label" data-label="${escapeAttr(label)}">Rename</button>
+            <button class="danger small" data-action="delete-label" data-label="${escapeAttr(label)}">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<div class="muted">No labels yet. Add one above.</div>';
+      renderFilters();
+    }
+
+    function countLeadsWithLabel(label) {
+      return state.leads.filter(l => (l.labels || []).includes(label)).length;
+    }
+
+    function normalizeLabel(label) {
+      return String(label || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function labelExists(label, exceptLabel = '') {
+      const target = normalizeLabel(label).toLowerCase();
+      const except = normalizeLabel(exceptLabel).toLowerCase();
+      return state.labels.some(l => normalizeLabel(l).toLowerCase() === target && normalizeLabel(l).toLowerCase() !== except);
+    }
+
+    function openAddLead() {
+      qs('dialogTitle').textContent = 'Add Lead';
+      qs('leadForm').reset();
+      qs('leadId').value = '';
+      qs('deleteLeadBtn').classList.add('hidden');
+      [...qs('labels').options].forEach(o => o.selected = false);
+      qs('reminderBefore').value = '60';
+      qs('reminderAt').value = '';
+      toggleCustomReminder();
+      qs('leadDialog').showModal();
+    }
+
+    window.editLead = function(id) {
+      const l = state.leads.find(x => x.id === id); if (!l) return;
+      qs('dialogTitle').textContent = 'Edit Lead';
+      qs('leadId').value = l.id;
+      ['name','phone','intent','status','location','propertyType','budget','timeline','appointmentDate','appointmentTime','reminderBefore','reminderAt','nextFollowUp','source','notes','nextAction'].forEach(k => qs(k).value = l[k] || '');
+      toggleCustomReminder();
+      [...qs('labels').options].forEach(o => o.selected = (l.labels || []).includes(o.value));
+      qs('deleteLeadBtn').classList.remove('hidden');
+      qs('leadDialog').showModal();
+    }
+
+    qs('leadForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const id = qs('leadId').value || crypto.randomUUID();
+      const existing = state.leads.find(l => l.id === id);
+      const lead = {
+        id, createdAt: existing?.createdAt || new Date().toISOString(),
+        name: qs('name').value.trim(), phone: qs('phone').value.trim(), intent: qs('intent').value, status: qs('status').value,
+        location: qs('location').value.trim(), propertyType: qs('propertyType').value.trim(), budget: qs('budget').value,
+        timeline: qs('timeline').value.trim(), appointmentDate: qs('appointmentDate').value, appointmentTime: qs('appointmentTime').value,
+        reminderBefore: qs('reminderBefore').value, reminderAt: qs('reminderBefore').value === 'custom' ? qs('reminderAt').value : '',
+        nextFollowUp: qs('nextFollowUp').value, source: qs('source').value.trim(), notes: qs('notes').value.trim(), nextAction: qs('nextAction').value.trim(),
+        labels: [...qs('labels').selectedOptions].map(o => o.value)
+      };
+      state.leads = existing ? state.leads.map(l => l.id === id ? lead : l) : [lead, ...state.leads];
+      saveState(); qs('leadDialog').close(); renderAll();
+    });
+
+    qs('deleteLeadBtn').addEventListener('click', () => {
+      const id = qs('leadId').value;
+      if (confirm('Delete this lead?')) { state.leads = state.leads.filter(l => l.id !== id); saveState(); qs('leadDialog').close(); renderAll(); }
+    });
+
+    qs('addLeadBtn').onclick = openAddLead;
+    qs('labelsBtn').onclick = () => qs('labelsDialog').showModal();
+    qs('reminderBefore').onchange = toggleCustomReminder;
+    qs('appointmentDate').onchange = maybeSetCustomReminderDefault;
+    qs('appointmentTime').onchange = maybeSetCustomReminderDefault;
+    qs('enableNotificationsBtn').onclick = enableBrowserNotifications;
+    qs('addLabelBtn').onclick = () => addLabelFromInput();
+    qs('newLabelInput').addEventListener('keydown', e => { if (e.key === 'Enter') addLabelFromInput(); });
+
+    function toggleCustomReminder() {
+      const isCustom = qs('reminderBefore').value === 'custom';
+      qs('customReminderWrap').classList.toggle('hidden', !isCustom);
+      if (isCustom) maybeSetCustomReminderDefault();
+    }
+
+    function maybeSetCustomReminderDefault() {
+      if (qs('reminderBefore').value !== 'custom' || qs('reminderAt').value) return;
+      const date = qs('appointmentDate').value;
+      const time = qs('appointmentTime').value;
+      if (!date || !time) return;
+      const d = new Date(`${date}T${time}:00`);
+      if (!isNaN(d)) {
+        d.setMinutes(d.getMinutes() - 60);
+        qs('reminderAt').value = toDateTimeLocalValue(d);
+      }
+    }
+
+    async function enableBrowserNotifications() {
+      if (!('Notification' in window)) {
+        alert('This browser does not support notifications. You can still use the in-app reminder queue.');
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      alert(permission === 'granted' ? 'Browser notifications enabled. Keep this app open to receive reminders.' : 'Notifications were not enabled. The in-app reminder queue will still work.');
+      checkAppointmentReminders();
+    }
+
+    function checkAppointmentReminders() {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const now = new Date();
+      const notified = getNotifiedMap();
+      state.leads.forEach(lead => {
+        const reminder = computeReminderDate(lead);
+        const appt = getAppointmentDateTime(lead);
+        if (!reminder || ['WON','LOST'].includes(lead.status)) return;
+        if (reminder > now) return;
+        if (appt && appt < now) return;
+        const key = reminderKey(lead);
+        if (notified[key]) return;
+        new Notification(`Reminder: ${lead.name}`, { body: `Appointment ${fmtDate(lead.appointmentDate)} ${lead.appointmentTime || ''}. ${lead.nextAction || 'Follow up with this lead.'}` });
+        notified[key] = new Date().toISOString();
+      });
+      saveNotifiedMap(notified);
+      renderStats();
+      renderReminders();
+    }
+
+    function addLabelFromInput() {
+      const label = normalizeLabel(qs('newLabelInput').value);
+      if (!label) return;
+      if (labelExists(label)) { alert('This label already exists.'); return; }
+      state.labels.push(label);
+      qs('newLabelInput').value = '';
+      saveState(); renderAll();
+    }
+
+    qs('labelList').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const label = btn.dataset.label;
+      if (btn.dataset.action === 'rename-label') renameLabel(label);
+      if (btn.dataset.action === 'delete-label') deleteLabel(label);
+    });
+
+    function renameLabel(oldLabel) {
+      const nextLabel = normalizeLabel(prompt(`Rename label "${oldLabel}" to:`, oldLabel));
+      if (!nextLabel || nextLabel === oldLabel) return;
+      if (labelExists(nextLabel, oldLabel)) { alert('Another label already has that name.'); return; }
+      state.labels = state.labels.map(l => l === oldLabel ? nextLabel : l);
+      state.leads.forEach(l => {
+        l.labels = (l.labels || []).map(x => x === oldLabel ? nextLabel : x);
+      });
+      saveState(); renderAll();
+    }
+
+    function deleteLabel(label) {
+      if (!confirm(`Delete label "${label}"? It will be removed from leads too.`)) return;
+      state.labels = state.labels.filter(l => l !== label);
+      state.leads.forEach(l => l.labels = (l.labels || []).filter(x => x !== label));
+      saveState(); renderAll();
+    }
+
+    qs('searchInput').oninput = renderLeads;
+    qs('statusFilter').onchange = renderLeads;
+    qs('labelFilter').onchange = renderLeads;
+    qs('sortFilter').onchange = renderLeads;
+    qs('clearFiltersBtn').onclick = () => { qs('searchInput').value=''; qs('statusFilter').value=''; qs('labelFilter').value=''; qs('sortFilter').value='nextAction'; renderLeads(); };
+    qs('prevMonth').onclick = () => { calendarDate.setMonth(calendarDate.getMonth()-1); renderCalendar(); };
+    qs('nextMonth').onclick = () => { calendarDate.setMonth(calendarDate.getMonth()+1); renderCalendar(); };
+    qs('todayBtn').onclick = () => { calendarDate = new Date(); selectedDate = todayStr(); renderCalendar(); };
+
+    qs('exportBtn').onclick = () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'lead-organizer-backup.json'; a.click(); URL.revokeObjectURL(url);
+    };
+    qs('importBtn').onclick = () => qs('importFile').click();
+    qs('importFile').onchange = e => {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          if (!imported.leads || !imported.labels) throw new Error('Invalid file');
+          state = imported; saveState(); renderAll(); alert('Import complete.');
+        } catch { alert('Import failed. Please select a valid backup JSON file.'); }
+      };
+      reader.readAsText(file);
+    };
+
+    function escapeHtml(str) { return String(str ?? '').replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s])); }
+    function escapeAttr(str) { return escapeHtml(str).replace(/'/g, '&#39;'); }
+
+    setInterval(checkAppointmentReminders, 60000);
+    renderAll();
+    checkAppointmentReminders();
+  </script>
+</body>
+</html>
