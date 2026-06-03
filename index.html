@@ -1446,7 +1446,7 @@ function scoreLead(l) {
   if (text.includes('price') || text.includes('available') || text.includes('how much')) score+=5;
   score = Math.max(0, Math.min(100, score));
   const status = score>=70?'HOT':score>=40?'WARM':'COLD';
-  return { score, status, reasons, nextAction: status==='HOT'?'Book/confirm viewing. Send matching properties now.':status==='WARM'?'Send options and ask budget/timeline/appointment.':'Send basic info and nurture. Don't call yet.', followDays: status==='HOT'?0:status==='WARM'?1:3 };
+  return { score, status, reasons, nextAction: status==='HOT'?'Book/confirm viewing. Send matching properties now.':status==='WARM'?'Send options and ask budget/timeline/appointment.':'Send basic info and nurture. Do not call yet.', followDays: status==='HOT'?0:status==='WARM'?1:3 };
 }
 
 function autoLabels(l, status) {
