@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prime Property Match | Real Estate Inquiry</title>
+  <meta name="description" content="Submit your property requirement and get matched with the right real estate options. Connected to Google Sheets CRM." />
+  <style>
+    :root {
+      --bg: #f7f3ec;
+      --paper: rgba(255,255,255,.78);
+      --paper-strong: #ffffff;
+      --ink: #171717;
+      --muted: #6f6a61;
+      --line: rgba(23,23,23,.12);
+      --brand: #9f6a43;
+      --brand-dark: #171717;
+      --green: #256f5b;
+      --green-soft: rgba(37,111,91,.1);
+      --red: #a43a3a;
+      --shadow: 0 24px 70px rgba(23,23,23,.13);
+      --radius: 26px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(159,106,67,.24), transparent 31rem),
+        radial-gradient(circle at top right, rgba(37,111,91,.18), transparent 30rem),
+        var(--bg);
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; }
+    .shell { width: min(1160px, calc(100% - 32px)); margin: 0 auto; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid var(--line);
+      background: rgba(247,243,236,.86);
+      backdrop-filter: blur(16px);
+    }
+    .nav {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: -.03em; }
+    .brand-mark {
+      width: 43px;
+      height: 43px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+      box-shadow: 0 14px 34px rgba(0,0,0,.17);
+    }
+    .brand small { display: block; color: var(--muted); font-weight: 700; letter-spacing: 0; margin-top: 1px; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-links a { padding: 10px 13px; border-radius: 999px; color: var(--muted); font-weight: 850; }
+    .nav-links a:hover { background: rgba(255,255,255,.7); color: var(--ink); }
+
+    .btn {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font-weight: 900;
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn:disabled { cursor: not-allowed; opacity: .62; transform: none; }
+    .btn-primary { background: var(--brand-dark); color: #fff; box-shadow: 0 18px 38px rgba(23,23,23,.18); }
+    .btn-green { background: var(--green); color: #fff; box-shadow: 0 18px 38px rgba(37,111,91,.2); }
+    .btn-ghost { background: rgba(255,255,255,.72); color: var(--ink); border: 1px solid var(--line); }
+    .btn-soft { background: rgba(159,106,67,.12); color: var(--brand); }
+
+    .hero { padding: 64px 0 34px; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 28px;
+      align-items: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: 20px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.6);
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 13px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 6px rgba(37,111,91,.12); }
+    h1 {
+      margin: 0;
+      font-size: clamp(40px, 6.5vw, 76px);
+      line-height: .94;
+      letter-spacing: -.075em;
+    }
+    .lead {
+      max-width: 650px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.55;
+      font-weight: 620;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .trust-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 28px;
+      max-width: 650px;
+    }
+    .trust-card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.62);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .trust-card strong { display: block; font-size: 22px; letter-spacing: -.04em; }
+    .trust-card span { display: block; margin-top: 2px; color: var(--muted); font-weight: 800; font-size: 13px; }
+
+    .hero-card {
+      min-height: 570px;
+      border-radius: 34px;
+      overflow: hidden;
+      position: relative;
+      padding: 20px;
+      background:
+        linear-gradient(180deg, rgba(23,23,23,.08), rgba(23,23,23,.5)),
+        url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1300&q=80') center/cover;
+      box-shadow: var(--shadow);
+    }
+    .hero-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(150deg, transparent 15%, rgba(0,0,0,.48)); }
+    .match-panel {
+      position: absolute;
+      z-index: 2;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.5);
+      border-radius: 26px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(16px);
+    }
+    .panel-top { display: flex; justify-content: space-between; gap: 14px; align-items: start; margin-bottom: 14px; }
+    .badge { display: inline-flex; padding: 7px 11px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-weight: 900; font-size: 12px; }
+    .price { font-size: 28px; font-weight: 950; letter-spacing: -.05em; }
+    .match-panel p { margin: 4px 0 0; color: var(--muted); font-weight: 750; }
+    .quick-search { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .quick-search .full { grid-column: 1 / -1; }
+
+    .section { padding: 54px 0; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 22px; margin-bottom: 23px; }
+    .section-head h2 { margin: 0; font-size: clamp(32px, 4vw, 48px); line-height: 1; letter-spacing: -.06em; }
+    .section-head p { margin: 0; max-width: 580px; color: var(--muted); line-height: 1.55; font-weight: 680; }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .chip { border: 1px solid var(--line); background: rgba(255,255,255,.7); padding: 10px 14px; border-radius: 999px; color: var(--muted); font-weight: 900; cursor: pointer; }
+    .chip.active { background: var(--brand-dark); color: #fff; }
+
+    .property-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .property-card { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: 0 14px 38px rgba(23,23,23,.08); transition: transform .16s ease, box-shadow .16s ease; }
+    .property-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+    .property-img { height: 205px; background: #ddd center/cover; position: relative; }
+    .property-img span { position: absolute; top: 14px; left: 14px; padding: 7px 10px; border-radius: 999px; background: rgba(255,255,255,.92); font-weight: 950; font-size: 12px; }
+    .property-body { padding: 18px; }
+    .property-body h3 { margin: 0 0 7px; font-size: 20px; letter-spacing: -.035em; }
+    .property-body p { margin: 0; color: var(--muted); line-height: 1.45; font-weight: 700; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+    .meta b { padding: 7px 9px; border-radius: 999px; background: rgba(23,23,23,.06); font-size: 12px; }
+    .property-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .property-bottom strong { font-size: 20px; letter-spacing: -.04em; }
+
+    .flow-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .flow-card { min-height: 170px; padding: 22px; border-radius: 26px; background: rgba(23,23,23,.92); color: #fff; position: relative; overflow: hidden; }
+    .flow-card::after { content:""; position: absolute; right: -34px; bottom: -34px; width: 112px; height:112px; border-radius: 50%; background: rgba(255,255,255,.08); }
+    .flow-card span { color: rgba(255,255,255,.64); font-weight: 900; font-size: 13px; }
+    .flow-card h3 { margin: 12px 0 8px; font-size: 22px; letter-spacing: -.04em; }
+    .flow-card p { margin: 0; color: rgba(255,255,255,.73); line-height: 1.45; }
+
+    .contact-grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 20px; align-items: start; }
+    .contact-card, .form-card { border: 1px solid var(--line); border-radius: 32px; padding: 24px; background: rgba(255,255,255,.74); box-shadow: 0 20px 55px rgba(23,23,23,.08); }
+    .contact-card h2, .form-card h2 { margin: 0 0 9px; font-size: 34px; line-height: 1; letter-spacing: -.05em; }
+    .contact-card p, .form-card p { color: var(--muted); line-height: 1.55; font-weight: 680; }
+    .contact-options { display: grid; gap: 10px; margin-top: 20px; }
+    .contact-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 20px; background: #fff; font-weight: 900; }
+    .contact-option small { display: block; margin-top: 3px; color: var(--muted); font-weight: 750; }
+
+    .progress { height: 9px; background: rgba(23,23,23,.08); border-radius: 999px; overflow: hidden; margin: 18px 0 20px; }
+    .progress span { display: block; height: 100%; width: 33.33%; background: linear-gradient(90deg, var(--brand), var(--green)); border-radius: 999px; transition: width .22s ease; }
+    .step { display: none; }
+    .step.active { display: block; animation: fade .18s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .step-title { display: flex; align-items: center; gap: 9px; margin: 0 0 13px; font-size: 15px; color: var(--green); font-weight: 950; }
+    .step-number { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; background: var(--green); color: #fff; font-size: 13px; }
+
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { margin-bottom: 12px; }
+    .field.full { grid-column: 1 / -1; }
+    label { display: block; margin: 0 0 7px; color: #37332d; font-size: 13px; font-weight: 900; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 13px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+    textarea { min-height: 105px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(37,111,91,.58); box-shadow: 0 0 0 4px rgba(37,111,91,.1); }
+    .mini-note { margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .form-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 9px; }
+    .status-box { display: none; margin-top: 14px; padding: 14px; border-radius: 18px; background: var(--green-soft); color: var(--green); font-weight: 900; line-height: 1.35; }
+    .status-box.error { background: rgba(164,58,58,.12); color: var(--red); }
+    .selected-box { display:none; margin-bottom:14px; padding:12px 14px; border-radius:18px; background: rgba(159,106,67,.1); color: var(--brand); font-weight: 900; }
+    .privacy-note { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 12px 0 0; }
+
+    .floating-actions { position: fixed; right: 18px; bottom: 18px; z-index: 60; display: grid; gap: 10px; }
+    .float-btn { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--brand-dark); box-shadow: 0 14px 35px rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.18); font-size: 20px; }
+    .float-btn.whatsapp { background: #25D366; }
+    .float-btn.messenger { background: #0084FF; }
+    .float-btn.email { background: var(--brand); }
+
+    footer { margin-top: 42px; padding: 34px 0; border-top: 1px solid var(--line); color: var(--muted); }
+    footer .shell { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; font-weight: 750; }
+    .hidden-frame { display: none; width: 0; height: 0; border: 0; }
+    .hp-field { position: absolute; left: -9999px; opacity: 0; pointer-events: none; }
+
+    @media (max-width: 980px) {
+      .hero-grid, .contact-grid { grid-template-columns: 1fr; }
+      .property-grid { grid-template-columns: repeat(2, 1fr); }
+      .flow-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-card { min-height: 510px; }
+    }
+    @media (max-width: 700px) {
+      .nav-links { display: none; }
+      .hero { padding-top: 44px; }
+      .trust-row, .property-grid, .flow-grid, .field-grid { grid-template-columns: 1fr; }
+      .section-head { align-items: start; flex-direction: column; }
+      .hero-card { min-height: 495px; border-radius: 28px; }
+      .quick-search { grid-template-columns: 1fr; }
+      .quick-search .full { grid-column: auto; }
+      .form-actions { flex-direction: column; }
+      .form-actions .btn { width: 100%; }
+      .floating-actions { right: 12px; bottom: 12px; }
+      .float-btn { width: 50px; height: 50px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell nav">
+      <a class="brand" href="#top" aria-label="Home">
+        <span class="brand-mark">RE</span>
+        <span>
+          Prime Property Match
+          <small>Landing page → Google Sheets CRM</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#properties">Properties</a>
+        <a href="#process">CRM Flow</a>
+        <a href="#inquire">Inquiry Form</a>
+      </nav>
+      <a class="btn btn-primary" href="#inquire">Get matched</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Customer inquiry auto-populates your CRM sheet</div>
+          <h1>Turn every property inquiry into a tracked lead.</h1>
+          <p class="lead">Customers fill out the form once. The website sends their details to Apps Script, then Apps Script automatically fills your Google Sheet CRM with lead score, temperature, matched property, and next follow-up date.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#inquire">Fill inquiry form</a>
+            <a class="btn btn-ghost" id="heroWhatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a>
+            <a class="btn btn-soft" id="heroMessenger" href="#" target="_blank" rel="noopener">Messenger</a>
+          </div>
+          <div class="trust-row" aria-label="CRM highlights">
+            <div class="trust-card"><strong>Auto</strong><span>Google Sheet entry</span></div>
+            <div class="trust-card"><strong>Score</strong><span>Hot / Warm / Cold</span></div>
+            <div class="trust-card"><strong>Next</strong><span>Follow-up date</span></div>
+          </div>
+        </div>
+
+        <aside class="hero-card" aria-label="Quick property match panel">
+          <div class="match-panel">
+            <div class="panel-top">
+              <div>
+                <span class="badge">Quick match</span>
+                <p>Pre-fill the inquiry form based on customer preference.</p>
+              </div>
+              <div class="price">₱3M+</div>
+            </div>
+            <div class="quick-search">
+              <select id="quickType" aria-label="Quick property type">
+                <option value="Condo">Condo</option>
+                <option value="House and Lot">House and Lot</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Lot">Lot</option>
+                <option value="Commercial">Commercial</option>
+              </select>
+              <select id="quickBudget" aria-label="Quick budget range">
+                <option value="0-3000000">Below ₱3M</option>
+                <option value="3000000-8000000">₱3M - ₱8M</option>
+                <option value="8000000-15000000">₱8M - ₱15M</option>
+                <option value="15000000-30000000">₱15M - ₱30M</option>
+                <option value="30000000-999999999">₱30M+</option>
+              </select>
+              <input class="full" id="quickLocation" placeholder="Preferred location e.g. BGC, Makati, Pasay" />
+              <button class="btn btn-green full" id="quickMatchBtn" type="button">Use these details in form</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="properties">
+      <div class="shell">
+        <div class="section-head">
+          <h2>Featured properties</h2>
+          <p>Each “Inquire” button pre-fills the customer form with the property ID and property name, so the CRM can record which listing created the lead.</p>
+        </div>
+        <div class="filters" aria-label="Property filters">
+          <button class="chip active" type="button" data-filter="All">All</button>
+          <button class="chip" type="button" data-filter="Condo">Condo</button>
+          <button class="chip" type="button" data-filter="House and Lot">House and Lot</button>
+          <button class="chip" type="button" data-filter="Apartment">Apartment</button>
+          <button class="chip" type="button" data-filter="Lot">Lot</button>
+          <button class="chip" type="button" data-filter="Commercial">Commercial</button>
+        </div>
+        <div class="property-grid" id="propertyGrid"></div>
+      </div>
+    </section>
+
+    <section class="section" id="process">
+      <div class="shell">
+        <div class="section-head">
+          <h2>How the CRM fills itself</h2>
+          <p>This is the exact data flow: landing page form → Apps Script endpoint → Google Sheet CRM tabs.</p>
+        </div>
+        <div class="flow-grid">
+          <article class="flow-card"><span>01</span><h3>Customer submits</h3><p>Name, phone, budget, location, timeline, and property interest.</p></article>
+          <article class="flow-card"><span>02</span><h3>Apps Script receives</h3><p>The backend validates the inquiry and creates a unique Lead ID.</p></article>
+          <article class="flow-card"><span>03</span><h3>Sheet auto-fills</h3><p>New row is written to <b>02_Leads</b> with score and follow-up date.</p></article>
+          <article class="flow-card"><span>04</span><h3>Activity is logged</h3><p>The first inquiry is saved in <b>04_Activities</b> for agent tracking.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="inquire">
+      <div class="shell contact-grid">
+        <aside class="contact-card">
+          <h2>Prefer chat?</h2>
+          <p>Customers can contact you through Messenger, WhatsApp, or email. The form is still the best option because it auto-populates the CRM.</p>
+          <div class="contact-options">
+            <a class="contact-option" id="contactWhatsapp" href="#" target="_blank" rel="noopener"><span>WhatsApp<small>Fastest mobile inquiry</small></span><b>↗</b></a>
+            <a class="contact-option" id="contactMessenger" href="#" target="_blank" rel="noopener"><span>Messenger<small>Facebook page chat</small></span><b>↗</b></a>
+            <a class="contact-option" id="contactEmail" href="#"><span>Email<small>For detailed property requirements</small></span><b>↗</b></a>
+          </div>
+        </aside>
+
+        <section class="form-card">
+          <h2>Property inquiry form</h2>
+          <p>When the customer clicks submit, this form automatically creates a new lead row inside your Google Sheet CRM.</p>
+          <div class="selected-box" id="selectedBox"></div>
+          <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+
+          <form id="leadForm" autocomplete="on">
+            <input type="hidden" name="propertyId" id="propertyId" />
+            <input type="hidden" name="propertyName" id="propertyName" />
+            <input type="hidden" name="leadSource" value="Website Landing Page" />
+            <input type="hidden" name="formName" value="Real Estate Landing Inquiry" />
+            <div class="hp-field" aria-hidden="true">
+              <label>Leave this empty</label>
+              <input type="text" name="companyWebsite" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="step active" data-step="1">
+              <div class="step-title"><span class="step-number">1</span> Customer contact details</div>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="fullName">Full name *</label>
+                  <input id="fullName" name="fullName" required placeholder="Juan Dela Cruz" />
+                </div>
+                <div class="field">
+                  <label for="phone">Mobile / WhatsApp *</label>
+                  <input id="phone" name="phone" required inputmode="tel" placeholder="0917 123 4567" />
+                </div>
+                <div class="field">
+                  <label for="email">Email</label>
+                  <input id="email" name="email" type="email" placeholder="name@email.com" />
+                </div>
+                <div class="field">
+                  <label for="contactMethod">Preferred contact *</label>
+                  <select id="contactMethod" name="contactMethod" required>
+                    <option value="">Choose one</option>
+                    <option>WhatsApp</option>
+                    <option>Messenger</option>
+                    <option>Call</option>
+                    <option>SMS</option>
+                    <option>Email</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="step" data-step="2">
+              <div class="step-title"><span class="step-number">2</span> Property requirement</div>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="clientType">I am a *</label>
+                  <select id="clientType" name="clientType" required>
+                    <option value="">Choose one</option>
+                    <option>Buyer</option>
+                    <option>Renter</option>
+                    <option>Seller</option>
+                    <option>Owner / Lessor</option>
+                    <option>Investor</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="propertyType">Property type *</label>
+                  <select id="propertyType" name="propertyType" required>
+                    <option value="">Choose one</option>
+                    <option>Condo</option>
+                    <option>House and Lot</option>
+                    <option>Apartment</option>
+                    <option>Lot</option>
+                    <option>Commercial</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="location">Preferred location *</label>
+                  <input id="location" name="location" required placeholder="BGC, Makati, Pasay, QC" />
+                </div>
+                <div class="field">
+                  <label for="budgetRange">Budget range *</label>
+                  <select id="budgetRange" name="budgetRange" required>
+                    <option value="">Choose budget</option>
+                    <option value="0-15000">Below ₱15k/mo</option>
+                    <option value="15000-30000">₱15k - ₱30k/mo</option>
+                    <option value="30000-60000">₱30k - ₱60k/mo</option>
+                    <option value="0-3000000">Below ₱3M</option>
+                    <option value="3000000-8000000">₱3M - ₱8M</option>
+                    <option value="8000000-15000000">₱8M - ₱15M</option>
+                    <option value="15000000-30000000">₱15M - ₱30M</option>
+                    <option value="30000000-999999999">₱30M+</option>
+                  </select>
+                </div>
+                <div class="field full">
+                  <label for="timeline">Timeline *</label>
+                  <select id="timeline" name="timeline" required>
+                    <option value="">Choose timeline</option>
+                    <option>ASAP / 0-30 days</option>
+                    <option>Within 30 days</option>
+                    <option>1-3 months</option>
+                    <option>3-6 months</option>
+                    <option>Researching only</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="step" data-step="3">
+              <div class="step-title"><span class="step-number">3</span> Final details</div>
+              <div class="field-grid">
+                <div class="field full">
+                  <label for="message">Message / specific requirement</label>
+                  <textarea id="message" name="message" placeholder="Example: 1BR condo near BGC, pet-friendly, target move-in next month."></textarea>
+                </div>
+                <div class="field full">
+                  <label>
+                    <input type="checkbox" id="consent" name="consent" value="Yes" required style="width:auto; margin-right:8px;" />
+                    I agree to be contacted regarding this property inquiry. *
+                  </label>
+                  <div class="mini-note">This keeps your CRM compliant and confirms the customer gave permission to be contacted.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-ghost" type="button" id="prevBtn">Back</button>
+              <button class="btn btn-primary" type="button" id="nextBtn">Next</button>
+              <button class="btn btn-green" type="submit" id="submitBtn" style="display:none;">Send inquiry to CRM</button>
+            </div>
+            <div class="status-box" id="statusBox"></div>
+            <p class="privacy-note">Website form fields are mapped to your Google Sheet columns. Keep the Apps Script Web App URL private enough for operations, but treat it as public because any public website endpoint can receive submissions.</p>
+          </form>
+
+          <iframe class="hidden-frame" name="crmSubmitFrame" id="crmSubmitFrame" title="CRM submission frame"></iframe>
+          <form class="hidden-frame" id="crmPostForm" method="POST" target="crmSubmitFrame" accept-charset="UTF-8"></form>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div class="floating-actions" aria-label="Quick contact actions">
+    <a class="float-btn whatsapp" id="floatWhatsapp" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">☘</a>
+    <a class="float-btn messenger" id="floatMessenger" href="#" target="_blank" rel="noopener" aria-label="Messenger">✉</a>
+    <a class="float-btn email" id="floatEmail" href="#" aria-label="Email">@</a>
+  </div>
+
+  <footer>
+    <div class="shell">
+      <span>© <span id="year"></span> Prime Property Match</span>
+      <span>CRM-connected landing page · Google Sheets backend</span>
+    </div>
+  </footer>
+
+  <script>
+    const CONFIG = {
+      APPS_SCRIPT_URL: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
+      WHATSAPP_NUMBER: "639000000000",
+      MESSENGER_USERNAME: "yourpageusername",
+      EMAIL: "yourbusiness@email.com",
+      BUSINESS_NAME: "Prime Property Match"
+    };
+
+    const properties = [
+      { id: "P-00001", name: "BGC 1BR Near High Street", type: "Condo", location: "BGC / Taguig", price: "₱6.8M", details: "1BR · 42 sqm · Ready for viewing", image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80" },
+      { id: "P-00002", name: "MOA Studio Walking Distance", type: "Condo", location: "Pasay / MOA", price: "₱22k/mo", details: "Studio · Furnished · Near transport", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80" },
+      { id: "P-00003", name: "Makati 2BR Family Condo", type: "Condo", location: "Makati", price: "₱12.5M", details: "2BR · Parking · CBD access", image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80" },
+      { id: "P-00004", name: "QC House and Lot", type: "House and Lot", location: "Quezon City", price: "₱14.8M", details: "3BR · Gated village · Family-ready", image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80" },
+      { id: "P-00005", name: "Commercial Space for Lease", type: "Commercial", location: "Makati", price: "₱95k/mo", details: "Ground floor · High foot traffic", image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80" },
+      { id: "P-00006", name: "Laguna Residential Lot", type: "Lot", location: "Laguna", price: "₱2.9M", details: "180 sqm · Clean title · Investment", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80" }
+    ];
+
+    const grid = document.getElementById("propertyGrid");
+    const chips = document.querySelectorAll(".chip");
+    const statusBox = document.getElementById("statusBox");
+    const selectedBox = document.getElementById("selectedBox");
+    const form = document.getElementById("leadForm");
+    const postForm = document.getElementById("crmPostForm");
+    const submitBtn = document.getElementById("submitBtn");
+    let currentStep = 1;
+    let submissionInProgress = false;
+
+    function buildContactLinks() {
+      const message = encodeURIComponent("Hi, I want to inquire about property options.");
+      const whatsappLink = `https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${message}`;
+      const messengerLink = `https://m.me/${CONFIG.MESSENGER_USERNAME}`;
+      const emailLink = `mailto:${CONFIG.EMAIL}?subject=${encodeURIComponent("Property inquiry")}&body=${message}`;
+      ["heroWhatsapp", "contactWhatsapp", "floatWhatsapp"].forEach(id => document.getElementById(id).href = whatsappLink);
+      ["heroMessenger", "contactMessenger", "floatMessenger"].forEach(id => document.getElementById(id).href = messengerLink);
+      ["contactEmail", "floatEmail"].forEach(id => document.getElementById(id).href = emailLink);
+    }
+
+    function renderProperties(filter = "All") {
+      const filtered = filter === "All" ? properties : properties.filter(p => p.type === filter);
+      grid.innerHTML = filtered.map(p => `
+        <article class="property-card" data-type="${p.type}">
+          <div class="property-img" style="background-image:url('${p.image}')"><span>${p.type}</span></div>
+          <div class="property-body">
+            <h3>${p.name}</h3>
+            <p>${p.location}</p>
+            <div class="meta"><b>${p.details}</b><b>${p.id}</b></div>
+            <div class="property-bottom">
+              <strong>${p.price}</strong>
+              <button class="btn btn-soft" type="button" onclick="selectProperty('${p.id}')">Inquire</button>
+            </div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function selectProperty(propertyId) {
+      const property = properties.find(item => item.id === propertyId);
+      if (!property) return;
+      document.getElementById("propertyId").value = property.id;
+      document.getElementById("propertyName").value = property.name;
+      document.getElementById("propertyType").value = property.type;
+      document.getElementById("location").value = property.location;
+      document.getElementById("message").value = `I am interested in ${property.name} (${property.id}). Please send details and viewing schedule.`;
+      selectedBox.textContent = `Selected property: ${property.name} · ${property.id}`;
+      selectedBox.style.display = "block";
+      document.getElementById("inquire").scrollIntoView({ behavior: "smooth" });
+      showStatus("Property selected. Complete the customer details and submit to auto-fill the CRM.", false);
+      showStep(1);
+    }
+    window.selectProperty = selectProperty;
+
+    chips.forEach(chip => chip.addEventListener("click", () => {
+      chips.forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      renderProperties(chip.dataset.filter);
+    }));
+
+    function showStep(step) {
+      currentStep = step;
+      document.querySelectorAll(".step").forEach(el => el.classList.toggle("active", Number(el.dataset.step) === step));
+      document.getElementById("progressBar").style.width = `${step * 33.33}%`;
+      document.getElementById("prevBtn").style.visibility = step === 1 ? "hidden" : "visible";
+      document.getElementById("nextBtn").style.display = step === 3 ? "none" : "inline-flex";
+      submitBtn.style.display = step === 3 ? "inline-flex" : "none";
+    }
+
+    function stepIsValid(step) {
+      const active = document.querySelector(`.step[data-step="${step}"]`);
+      const fields = [...active.querySelectorAll("input, select, textarea")].filter(field => field.required);
+      return fields.every(field => {
+        if (!field.checkValidity()) {
+          field.reportValidity();
+          return false;
+        }
+        return true;
+      });
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", () => showStep(Math.max(1, currentStep - 1)));
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      if (stepIsValid(currentStep)) showStep(Math.min(3, currentStep + 1));
+    });
+
+    document.getElementById("quickMatchBtn").addEventListener("click", () => {
+      document.getElementById("propertyType").value = document.getElementById("quickType").value;
+      document.getElementById("budgetRange").value = document.getElementById("quickBudget").value;
+      document.getElementById("location").value = document.getElementById("quickLocation").value;
+      document.getElementById("message").value = "Please match me with properties based on my selected type, budget, and location.";
+      document.getElementById("inquire").scrollIntoView({ behavior: "smooth" });
+      showStatus("Quick match details added. Complete the contact details to send to CRM.", false);
+      showStep(1);
+    });
+
+    function getTrackingData() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        utm_source: params.get("utm_source") || "website",
+        utm_medium: params.get("utm_medium") || "landing_page",
+        utm_campaign: params.get("utm_campaign") || "organic",
+        utm_content: params.get("utm_content") || "",
+        pageUrl: window.location.href,
+        referrer: document.referrer || "",
+        campaignName: params.get("utm_campaign") || "Website Organic",
+        submittedAt: new Date().toISOString()
+      };
+    }
+
+    function formDataToObject(formEl) {
+      const data = Object.fromEntries(new FormData(formEl).entries());
+      return { ...data, ...getTrackingData() };
+    }
+
+    function postToAppsScript(data) {
+      postForm.innerHTML = "";
+      postForm.action = CONFIG.APPS_SCRIPT_URL;
+      Object.entries(data).forEach(([key, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value == null ? "" : String(value);
+        postForm.appendChild(input);
+      });
+      postForm.submit();
+    }
+
+    function showStatus(message, isError) {
+      statusBox.textContent = message;
+      statusBox.classList.toggle("error", Boolean(isError));
+      statusBox.style.display = "block";
+    }
+
+    function saveLocalBackup(data) {
+      const key = "real_estate_leads_backup";
+      const existing = JSON.parse(localStorage.getItem(key) || "[]");
+      existing.push(data);
+      localStorage.setItem(key, JSON.stringify(existing.slice(-50)));
+    }
+
+    function resetFormState() {
+      form.reset();
+      document.getElementById("propertyId").value = "";
+      document.getElementById("propertyName").value = "";
+      selectedBox.style.display = "none";
+      selectedBox.textContent = "";
+      showStep(1);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send inquiry to CRM";
+      submissionInProgress = false;
+    }
+
+    document.getElementById("crmSubmitFrame").addEventListener("load", () => {
+      if (!submissionInProgress) return;
+      showStatus("Inquiry sent. Check your Google Sheet tab 02_Leads for the new auto-filled row.", false);
+      setTimeout(resetFormState, 850);
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!stepIsValid(3)) return;
+
+      const data = formDataToObject(form);
+      saveLocalBackup(data);
+
+      if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.includes("PASTE_YOUR")) {
+        showStatus("Demo mode: lead saved in browser backup only. Paste your Apps Script Web App URL to auto-populate Google Sheets.", true);
+        return;
+      }
+
+      submissionInProgress = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending to CRM...";
+      postToAppsScript(data);
+      setTimeout(() => {
+        if (submissionInProgress) {
+          showStatus("Submitted. Apps Script is processing the CRM row now. Check 02_Leads in Google Sheets.", false);
+        }
+      }, 1100);
+    });
+
+    renderProperties();
+    buildContactLinks();
+    showStep(1);
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
